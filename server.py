@@ -17,13 +17,14 @@ Then deploy behind HTTPS (see README section "Remote control setup").
 import random
 import string
 import time
+import os
 
 from flask import Flask, jsonify
 from flask_socketio import SocketIO, join_room, leave_room, emit, disconnect
 
 app = Flask(__name__)
 app.config["SECRET_KEY"] = "change-this-too"
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode="threading")
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode="eventlet")
 
 # room_code -> { "device_sid": str|None, "controller_sid": str|None, "created": float }
 ROOMS = {}
@@ -145,7 +146,7 @@ def on_disconnect():
 
 
 if __name__ == "__main__":
-    # allow_unsafe_werkzeug is fine here: this is a tiny 2-user relay,
-    # not a public production service. For a public deploy, run behind
-    # gunicorn + gevent instead (see README).
-    socketio.run(app, host="0.0.0.0", port=5050, allow_unsafe_werkzeug=True)
+    # Local dev only. For a real deploy, run behind gunicorn with the
+    # eventlet worker class instead (see README / requirements.txt).
+    port = int(os.environ.get("PORT", 5050))
+    socketio.run(app, host="0.0.0.0", port=port)
